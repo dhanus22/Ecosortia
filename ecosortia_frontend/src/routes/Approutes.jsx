@@ -14,6 +14,7 @@ import Profile from "../pages/citizen/Profile";
 import AdminDashboard from "../pages/admin/Dashboard";
 import Reports from "../pages/admin/Reports";
 import ReportDetails from "../pages/admin/ReportDetails";
+import ProtectedRoute from "./ProtectedRoutes";
 
 function AppRoutes() {
 
@@ -38,23 +39,23 @@ function AppRoutes() {
                     />
 
                 </Route>
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
 
-                <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/report" element={<ReportWaste />} />
 
-                <Route path="/report" element={<ReportWaste />} />
+                    <Route path="/my-reports" element={<MyReports />} />
 
-                <Route path="/my-reports" element={<MyReports />} />
+                    <Route path="/credits" element={<Credits />} />
 
-                <Route path="/credits" element={<Credits />} />
+                    <Route path="/profile" element={<Profile />} />
 
-                <Route path="/profile" element={<Profile />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/reports" element={<Reports />} />
 
-                <Route path="/admin/reports" element={<Reports />} />
-
-                <Route path="/admin/report/:id" element={<ReportDetails />} />
-
+                    <Route path="/admin/report/:id" element={<ReportDetails />} />
+                </Route>
             </Routes>
 
         </BrowserRouter>
