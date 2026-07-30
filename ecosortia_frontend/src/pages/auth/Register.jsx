@@ -53,65 +53,102 @@ function Register() {
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-4">
 
-                <Input label="Username" placeholder="Enter username"  error={errors.username?.message}
-                    {...register("username", {  required: "Username is required",
-                        minLength: { value: 4, message: "Minimum 4 characters", },})}/>
+                <Input label="Username" placeholder="Enter username" error={errors.username?.message}
+                    {...register("username", {
+                        required: "Username is required",
+                        minLength: { value: 4, message: "Minimum 4 characters", },
+                    })} />
+
+                <Input
+                    label="First Name"
+                    placeholder="Enter first name"
+                    error={errors.first_name?.message}
+                    {...register("first_name", {
+                        required: "First name is required",
+                    })}
+                />
+
+                <Input
+                    label="Last Name"
+                    placeholder="Enter last name"
+                    error={errors.last_name?.message}
+                    {...register("last_name", {
+                        required: "Last name is required",
+                    })}
+                />
 
                 <Input
                     label="Email"
                     type="email"
                     placeholder="Enter email"
+                    error={errors.email?.message}
+                    {...register("email", {
+                        required: "Email is required",
+                    })}
                 />
 
                 <Input
                     label="Phone Number"
                     placeholder="Enter phone number"
+                    error={errors.phone_number?.message}
+                    {...register("phone_number", {
+                        required: "Phone number is required",
+                        pattern: {
+                            value: /^[6-9]\d{9}$/,
+                            message: "Enter a valid phone number",
+                        },
+                    })}
                 />
 
                 <Input
                     label="Address"
                     placeholder="Enter address"
+                    error={errors.address?.message}
+                    {...register("address", {
+                        required: "Address is required",
+                    })}
                 />
 
                 <Input
                     label="Password"
                     type="password"
                     placeholder="Enter password"
-                />
+                    error={errors.password?.message}
+                    {...register("password", {
+                        required: "Password is required",
+                        minLength: {
+                            value: 8,
+                            message: "Minimum 8 characters",
+                        },
+                    })} />
 
                 <Input
                     label="Confirm Password"
                     type="password"
                     placeholder="Confirm password"
+                    error={errors.confirm_password?.message}
+                    {...register("confirm_password", {
+                        required: "Confirm your password",
+                        validate: (value) =>
+                            value === password || "Passwords do not match",
+                    })}
                 />
 
-                <Button type="submit">
-
-                    Register
-
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}>
+                    {isSubmitting ? "Creating Account..." : "Register"}
                 </Button>
-
             </form>
 
             <p className="text-center mt-6 text-sm">
-
                 Already have an account?
-
-                <Link
-                    to="/login"
-                    className="ml-2 text-emerald-600 font-medium"
-                >
-
+                <Link to="/login" className="ml-2 text-emerald-600 font-medium">
                     Login
-
                 </Link>
-
             </p>
-
         </Card>
-
     );
-
 }
 
 export default Register;
