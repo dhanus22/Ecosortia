@@ -12,13 +12,13 @@ function Sidebar() {
 
         <aside className="w-64 bg-white border-r min-h-screen p-5">
 
-            <Link to="/dashboard" className="text-2xl font-bold mb-12">
+            <Link to="/dashboard" className="text-2xl font-bold mb-10">
                  
                 EcoSortia
 
             </Link>
 
-            <nav className="space-y-2">
+            <nav className="space-y-4 mt-3">
 
                 {citizenNavigation.map((item) => (
 
