@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
+import CitizenLayout from "../layouts/CitizenLayout";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -14,13 +15,14 @@ import Profile from "../pages/citizen/Profile";
 import AdminDashboard from "../pages/admin/Dashboard";
 import Reports from "../pages/admin/Reports";
 import ReportDetails from "../pages/admin/ReportDetails";
-import ProtectedRoute from "./ProtectedRoutes";
+import ProtectedRoute from "./ProtectedRoute";
+
 
 function AppRoutes() {
 
     return (
 
-        <BrowserRouter>
+            <BrowserRouter>
 
             <Routes>
 
@@ -40,26 +42,27 @@ function AppRoutes() {
 
                 </Route>
                 <Route element={<ProtectedRoute />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route element={<CitizenLayout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
 
-                    <Route path="/report" element={<ReportWaste />} />
+                        <Route path="/report" element={<ReportWaste />} />
 
-                    <Route path="/my-reports" element={<MyReports />} />
+                        <Route path="/my-reports" element={<MyReports />} />
 
-                    <Route path="/credits" element={<Credits />} />
+                        <Route path="/credits" element={<Credits />} />
 
-                    <Route path="/profile" element={<Profile />} />
+                        <Route path="/profile" element={<Profile />} />
 
-                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                        <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-                    <Route path="/admin/reports" element={<Reports />} />
+                        <Route path="/admin/reports" element={<Reports />} />
 
-                    <Route path="/admin/report/:id" element={<ReportDetails />} />
+                        <Route path="/admin/report/:id" element={<ReportDetails />} />
+                    </Route>
                 </Route>
             </Routes>
 
-        </BrowserRouter>
-
+            </BrowserRouter>
     );
 
 }

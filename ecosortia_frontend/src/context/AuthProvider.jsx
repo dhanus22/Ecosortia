@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
     const login = (data) => {
         const accessToken = data.access ?? data.tokens?.access;
         const refreshToken = data.refresh ?? data.tokens?.refresh;
-
+        const returnedUser = data.user ?? data;
 
         if (!accessToken || !refreshToken) {
             console.warn("Login response missing access or refresh token:", data);
@@ -26,11 +26,9 @@ export function AuthProvider({ children }) {
 
         localStorage.setItem("access", accessToken);
         localStorage.setItem("refresh", refreshToken);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(returnedUser));
 
-        //console.log("stored access:", localStorage.getItem("access"));
-
-        setUser(user);
+        setUser(returnedUser);
     };
 
     const logout = () => {
