@@ -2,19 +2,42 @@ import {
   FileText,
   Clock,
   CheckCircle,
-  Coins
+  Coins,
+  XCircle
 } from "lucide-react";
 
 import KPICard from "../../components/dashboard/KPICard";
 import QuickActions from "../../components/dashboard/QuickActions";
 import RecentReports from "../../components/dashboard/RecentReports";
-
+import useDashboard from "../../hooks/useDashboard";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import useAuth from "../../hooks/useAuth";
 
 function Dashboard() {
 
   const { user } = useAuth();
 
+  const {
+    dashboard,
+    loading,
+    error,
+  } = useDashboard();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return (
+
+      <div className="text-red-600">
+
+        Failed to load dashboard.
+
+      </div>
+
+    );
+  }
   return (
 
     <div className="space-y-8">
@@ -39,45 +62,65 @@ function Dashboard() {
 
         <KPICard
           title="Total Reports"
-          value="0"
+          value={dashboard.total_reports}
           icon={FileText}
           color="blue"
         />
 
         <KPICard
           title="Pending"
-          value="0"
+          value={dashboard.pending}
           icon={Clock}
           color="amber"
         />
 
         <KPICard
           title="Completed"
-          value="0"
+          value={dashboard.completed}
           icon={CheckCircle}
           color="emerald"
         />
 
         <KPICard
           title="Credits"
-          value={user?.credits ?? 0}
+          value={user?.credits ?? dashboard.credits}
           icon={Coins}
           color="emerald"
+        />
+
+        <KPICard
+          title="In Progress"
+          value={dashboard.in_progress}
+          icon={Clock}
+          color="blue"
+        />
+
+        <KPICard
+          title="Rejected"
+          value={dashboard.rejected}
+          icon={XCircle}
+          color="red"
         />
 
       </div>
       <div className="grid lg:grid-cols-3 gap-6">
 
         <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl border shadow-sm p-6">
 
-          <RecentReports reports={[]} />
+            <h2 className="text-lg font-semibold mb-4">
 
+              <RecentReports reports={[]} />
+            </h2>
+
+            <p className="text-slate-500">
+              Recent reports will appear here.
+            </p>
+          </div>
         </div>
-
-        <QuickActions />
-
+        
       </div>
-
+      <QuickActions />
     </div>
 
   );
