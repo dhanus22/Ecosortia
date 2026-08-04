@@ -61,17 +61,7 @@ class WasteReportCreateSerializer(serializers.ModelSerializer):
             )
 
         return value
-
-    def validate_image(self, image):
-
-        if image.size > 5 * 1024 * 1024:
-            raise serializers.ValidationError(
-                "Image size cannot exceed 5 MB."
-            )
-
-        return image
     
-
     def validate_image(self, image):
 
         ext = os.path.splitext(image.name)[1].lower()
@@ -98,6 +88,14 @@ class WasteReportCreateSerializer(serializers.ModelSerializer):
 
         user = self.context["request"].user
 
+        if self.instance:
+
+            if self.instance.status == WasteReport.Status.COMPLETED:
+
+                raise serializers.ValidationError(
+                    "Completed reports cannot be modified."
+                )
+
         duplicate = WasteReport.objects.filter(
             user=user,
             address=attrs["address"],
@@ -106,21 +104,10 @@ class WasteReportCreateSerializer(serializers.ModelSerializer):
         ).exists()
 
         if duplicate:
+
             raise serializers.ValidationError(
                 "A similar report already exists for this location."
             )
-
-        return attrs
-
-    def validate(self, attrs):
-
-        if self.instance:
-
-            if self.instance.status == WasteReport.Status.COMPLETED:
-
-                raise serializers.ValidationError(
-                    "Completed reports cannot be modified."
-                )
 
         return attrs
 
