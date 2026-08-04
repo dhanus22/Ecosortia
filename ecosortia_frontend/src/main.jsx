@@ -6,6 +6,8 @@ import "./index.css";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { Toaster } from "react-hot-toast";
+import "leaflet/dist/leaflet.css";
+import "./utils/leaflet.js";
 
 ReactDOM.createRoot(
   document.getElementById("root")
