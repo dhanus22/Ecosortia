@@ -1,101 +1,407 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import TextArea from "../../components/ui/TextArea";
+
+import ImageUploader from "../../components/report/ImageUploader";
 import LocationButton from "../../components/report/LocationButton";
 import LeafletMap from "../../components/report/LeafletMap";
-import AddressInput from "../../components/report/AddressInput";
+
+import { WASTE_TYPES } from "../../utils/constants";
 
 import { getCurrentLocation } from "../../services/locationService";
-import { reverseGeocode } from "../../utils/geocodingService";
+import { reverseGeocode } from "../../services/geocodingService";
+import { createReport } from "../../services/reportService";
 
 function ReportWaste() {
+
+    const navigate = useNavigate();
     const [locationLoading, setLocationLoading] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
 
-    const [address, setAddress] = useState("");
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
 
-    const [coordinates, setCoordinates] = useState({
-        latitude: "",
-        longitude: "",
-    });
+        formState: {
+            errors,
+            isSubmitting,
+        }, } = useForm({
 
-    // Automatically fetch address whenever coordinates change
+            defaultValues: {
+                title: "",
+                description: "",
+                waste_type: "",
+                image: null,
+                latitude: "",
+                longitude: "",
+                address: "",
+            },
+        });
+
+    const latitude = watch("latitude");
+    const longitude = watch("longitude");
+    const address = watch("address");
+
     useEffect(() => {
-        if (!coordinates.latitude || !coordinates.longitude) {
-            return;
-        }
 
+        if (!latitude || !longitude) return;
         const fetchAddress = async () => {
             try {
                 const result = await reverseGeocode(
-                    coordinates.latitude,
-                    coordinates.longitude
-                );
+                    latitude,
+                    longitude);
 
-                setAddress(result);
-            } catch (error) {
-                console.error(error);
-                toast.error("Unable to fetch address.");
+                setValue(
+                    "address",
+                    result
+                );
+            }
+
+            catch {
+                toast.error(
+                    "Unable to fetch address."
+                );
             }
         };
-
         fetchAddress();
-    }, [coordinates]);
+    }, [
+        latitude,
+        longitude,
+        setValue,
+    ]);
 
     const handleLocation = async () => {
         try {
             setLocationLoading(true);
-
             const location = await getCurrentLocation();
-
-            setCoordinates(location);
-
-            toast.success("Location detected successfully.");
-        } catch (error) {
-            console.error(error);
-            toast.error("Unable to fetch location.");
-        } finally {
+            setValue(
+                "latitude",
+                location.latitude
+            );
+            setValue(
+                "longitude",
+                location.longitude
+            );
+            toast.success(
+                "Location detected."
+            );
+        }
+        catch {
+            toast.error(
+                "Unable to detect location."
+            );
+        }
+        finally {
             setLocationLoading(false);
         }
     };
 
+    const handleImage = (file) => {
+
+        if (!file) return;
+        const allowed = [
+            "image/jpeg",
+            "image/png",]
+        if (!allowed.includes(file.type)) {
+            toast.error("Only JPG and PNG images are allowed.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size cannot exceed 5 MB.");
+            return;
+        }
+        setValue("image", file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const onSubmit = async (data) => {
+
+        try {
+            const formData = new FormData();
+            formData.append("title", data.title);
+            formData.append("description", data.description);
+            formData.append("waste_type", data.waste_type);
+            formData.append("image", data.image);
+            formData.append("latitude", data.latitude);
+            formData.append("longitude", data.longitude);
+            formData.append("address", data.address)
+            
+            if (!data.latitude || !data.longitude) {
+                toast.error("Please detect your location.");
+                return;}
+
+            if (!data.image) {
+                toast.error("Please upload an image.");
+                return;}
+
+            await createReport(formData);
+            toast.success("Waste report submitted successfully.");
+            navigate("/my-reports");
+        } catch (error) {
+            console.error(error);
+            const response = error.response?.data;
+            if (response && typeof response === "object") {
+                Object.entries(response).forEach(([field, messages]) => {
+                    const message = Array.isArray(messages)
+                        ? messages[0]
+                        : messages;
+                    toast.error(`${field}: ${message}`);
+                });
+            }
+            else {
+
+                toast.error("Failed to submit report.");
+
+            }
+        }
+    };
+
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">
-                Report Waste
-            </h1>
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold"> Report Waste </h1>
+            <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-6" >
+                <ImageUploader
+                    image={imagePreview}
+                    onChange={handleImage} />
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-2"> Waste Type </label>
 
-            <LocationButton
-                onClick={handleLocation}
-                loading={locationLoading}
-            />
+                        <select
+                            {...register(
+                                "waste_type",
+                                { required: "Waste type is required", })}
+                            className="w-full border rounded-lg p-3">
+                            <option value="">
+                                Select Waste Type
+                            </option>
 
-            <div className="bg-white rounded-xl border p-4 space-y-2">
-                <p>
-                    <strong>Latitude:</strong>{" "}
-                    {coordinates.latitude
-                        ? coordinates.latitude.toFixed(6)
-                        : "-"}
-                </p>
+                            {WASTE_TYPES.map((type) => (
+                                <option
+                                    key={type}
+                                    value={type}>
+                                    {type}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-red-600 text-sm mt-1">
+                            {errors.waste_type?.message}
+                        </p>
+                    </div>
 
-                <p>
-                    <strong>Longitude:</strong>{" "}
-                    {coordinates.longitude
-                        ? coordinates.longitude.toFixed(6)
-                        : "-"}
-                </p>
-            </div>
+                    <Input
+                        label="Title"
+                        placeholder="Enter title"
+                        error={errors.title?.message}
+                        {...register(
+                            "title",
+                            {
+                                required: "Title is required",
+                                minLength: {
+                                    value: 5,
+                                    message: "Minimum 5 characters",
+                                },
+                            })} />
+                </div>
+                <TextArea
+                    label="Description"
+                    placeholder="Describe the waste"
+                    error={errors.description?.message}
+                    {...register(
+                        "description",
+                        {
+                            required: "Description is required",
+                            minLength: {
+                                value: 15,
+                                message: "Minimum 15 characters",
+                            },
+                        })} />
+                <LocationButton
+                    onClick={handleLocation}
+                    loading={locationLoading}
+                />
+                <div className="bg-white rounded-xl border p-4">
+                    <p> <strong>Latitude: </strong>
+                        {" "}
+                        {latitude
+                            ? Number(latitude).toFixed(6)
+                            : "-"}
+                    </p>
+                    <p><strong> Longitude: </strong>
+                        {" "}
+                        {longitude
+                            ? Number(longitude).toFixed(6)
+                            : "-"}
+                    </p>
+                </div>
+                <LeafletMap
+                    coordinates={{
+                        latitude,
+                        longitude,
+                    }}
 
-            <LeafletMap
-                coordinates={coordinates}
-                setCoordinates={setCoordinates}
-            />
+                    setCoordinates={(coords) => {
 
-            <AddressInput
-                address={address}
-                setAddress={setAddress}
-            />
+                        setValue(
+
+                            "latitude",
+
+                            coords.latitude
+
+                        );
+
+                        setValue(
+
+                            "longitude",
+
+                            coords.longitude
+
+                        );
+
+                    }}
+
+                />
+
+                <TextArea
+
+                    label="Address"
+
+                    error={errors.address?.message}
+
+                    {...register(
+
+                        "address",
+
+                        {
+
+                            required: "Address is required",
+
+                        }
+
+                    )}
+
+                />
+
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? "Submitting..." : "Submit Report"}
+                </Button>
+            </form>
         </div>
     );
 }
 
 export default ReportWaste;
+
+// import { useState, useEffect } from "react";
+// import toast from "react-hot-toast";
+
+// import LocationButton from "../../components/report/LocationButton";
+// import LeafletMap from "../../components/report/LeafletMap";
+// import AddressInput from "../../components/report/AddressInput";
+
+// import { getCurrentLocation } from "../../services/locationService";
+// import { reverseGeocode } from "../../utils/geocodingService";
+
+// function ReportWaste() {
+//     const [locationLoading, setLocationLoading] = useState(false);
+
+//     const [address, setAddress] = useState("");
+
+//     const [coordinates, setCoordinates] = useState({
+//         latitude: "",
+//         longitude: "",
+//     });
+
+//     // Automatically fetch address whenever coordinates change
+//     useEffect(() => {
+//         if (!coordinates.latitude || !coordinates.longitude) {
+//             return;
+//         }
+
+//         const fetchAddress = async () => {
+//             try {
+//                 const result = await reverseGeocode(
+//                     coordinates.latitude,
+//                     coordinates.longitude
+//                 );
+
+//                 setAddress(result);
+//             } catch (error) {
+//                 console.error(error);
+//                 toast.error("Unable to fetch address.");
+//             }
+//         };
+
+//         fetchAddress();
+//     }, [coordinates]);
+
+//     const handleLocation = async () => {
+//         try {
+//             setLocationLoading(true);
+
+//             const location = await getCurrentLocation();
+
+//             setCoordinates(location);
+
+//             toast.success("Location detected successfully.");
+//         } catch (error) {
+//             console.error(error);
+//             toast.error("Unable to fetch location.");
+//         } finally {
+//             setLocationLoading(false);
+//         }
+//     };
+
+//     return (
+//         <div className="space-y-6">
+//             <h1 className="text-3xl font-bold">
+//                 Report Waste
+//             </h1>
+
+//             <LocationButton
+//                 onClick={handleLocation}
+//                 loading={locationLoading}
+//             />
+
+//             <div className="bg-white rounded-xl border p-4 space-y-2">
+//                 <p>
+//                     <strong>Latitude:</strong>{" "}
+//                     {coordinates.latitude
+//                         ? coordinates.latitude.toFixed(6)
+//                         : "-"}
+//                 </p>
+
+//                 <p>
+//                     <strong>Longitude:</strong>{" "}
+//                     {coordinates.longitude
+//                         ? coordinates.longitude.toFixed(6)
+//                         : "-"}
+//                 </p>
+//             </div>
+
+//             <LeafletMap
+//                 coordinates={coordinates}
+//                 setCoordinates={setCoordinates}
+//             />
+
+//             <AddressInput
+//                 address={address}
+//                 setAddress={setAddress}
+//             />
+//         </div>
+//     );
+// }
+
+// export default ReportWaste;

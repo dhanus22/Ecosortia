@@ -36,7 +36,7 @@ function ImageUploader({
                     image ?
 
                         <img
-                            src={URL.createObjectURL(image)}
+                            src={image}
                             alt="Preview"
                             className="h-full w-full object-cover rounded-xl"
                         />

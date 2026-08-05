@@ -16,29 +16,28 @@ import AdminDashboard from "../pages/admin/Dashboard";
 import Reports from "../pages/admin/Reports";
 import ReportDetails from "../pages/admin/ReportDetails";
 import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 
 
 function AppRoutes() {
 
     return (
 
-            <BrowserRouter>
+        <BrowserRouter>
 
             <Routes>
 
                 <Route path="/" element={<Navigate to="/login" replace />} />
 
-                <Route element={<AuthLayout />}>
+                <Route element={<PublicRoute />}>
 
-                    <Route
-                        path="/login"
-                        element={<Login />}
-                    />
+                    <Route element={<AuthLayout />}>
 
-                    <Route
-                        path="/register"
-                        element={<Register />}
-                    />
+                        <Route path="/login" element={<Login />} />
+
+                        <Route path="/register" element={<Register />} />
+
+                    </Route>
 
                 </Route>
                 <Route element={<ProtectedRoute />}>
@@ -62,7 +61,7 @@ function AppRoutes() {
                 </Route>
             </Routes>
 
-            </BrowserRouter>
+        </BrowserRouter>
     );
 
 }
