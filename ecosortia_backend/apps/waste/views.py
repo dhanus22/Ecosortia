@@ -37,9 +37,26 @@ class WasteReportCreateView(generics.CreateAPIView):
     description="Returns all reports submittted by the authenticated user."
 )
 class MyWasteReportsView(generics.ListAPIView):
-
     serializer_class = WasteReportSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+
+    filterset_fields = ["status", "waste_type"]
+
+    search_fields = [
+        "title",
+        "description",
+        "address",
+        "waste_type",
+    ]
+
+    ordering_fields = ["created_at", "updated_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         return WasteReport.objects.filter(
