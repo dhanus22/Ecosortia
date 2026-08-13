@@ -57,6 +57,8 @@ function AppRoutes() {
                         <Route path="/admin/reports" element={<Reports />} />
 
                         <Route path="/admin/report/:id" element={<ReportDetails />} />
+
+                        <Route path="/my-reports/:id" element={<ReportDetails />} />
                     </Route>
                 </Route>
             </Routes>

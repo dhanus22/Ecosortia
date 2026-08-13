@@ -29,3 +29,8 @@ export const getMyReports = async ({
         },});
     return response.data;
 };
+
+export const getReportDetails = async (id) => {
+    const response = await api.get(`/waste/report/${id}/`);
+    return response.data;
+};
