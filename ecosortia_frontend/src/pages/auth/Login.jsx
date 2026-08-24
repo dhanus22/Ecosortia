@@ -10,19 +10,24 @@ import toast from "react-hot-toast";
 import { login as loginService } from "../../services/authService";
 import useAuth from "../../hooks/useAuth";
 
-
 function Login() {
 
     const navigate = useNavigate();
-
     const { login: authLogin } = useAuth();
 
     const onSubmit = async (data) => {
         try {
-            const response = await loginService(data);
-            authLogin(response);
-            toast.success(response.message);
-            navigate("/dashboard");
+            const loginResponse = await loginService(data);
+            const currentUser = loginResponse.user?.user ?? loginResponse.user ?? loginResponse;
+
+            authLogin(loginResponse);
+            toast.success(loginResponse.message);
+
+            if (currentUser?.is_staff) {
+                navigate("/admin/dashboard");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (error) {
             toast.error(
                 error.response?.data?.message ||

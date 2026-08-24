@@ -1,19 +1,20 @@
 import { Navigate, Outlet } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-function PublicRoute() {
+function AdminRoute() {
     const { user } = useAuth();
+
     const currentUser = user?.user ?? user;
 
-    if (currentUser?.is_staff) {
-        return <Navigate to="/admin/dashboard" replace />;
+    if (!currentUser) {
+        return <Navigate to="/login" replace />;
     }
 
-    if (currentUser) {
+    if (!currentUser.is_staff) {
         return <Navigate to="/dashboard" replace />;
     }
 
     return <Outlet />;
 }
 
-export default PublicRoute;
+export default AdminRoute;
