@@ -82,12 +82,15 @@ class LoginView(generics.GenericAPIView):
 
             "user": {
 
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "credits": user.credits,
+                "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "email": user.email,
+                        "credits": user.credits,
+                        "is_staff": user.is_staff,
+                    }
 
             }
 
