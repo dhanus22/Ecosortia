@@ -234,3 +234,8 @@ class MyDashboardView(APIView):
         }
 
         return Response(data)
+
+class AdminWasteReportDetailView(generics.RetrieveAPIView):
+    serializer_class = WasteReportSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = WasteReport.objects.select_related("user").all()
