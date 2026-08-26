@@ -72,15 +72,27 @@ function Profile() {
 
   const onSubmit = async (data) => {
     try {
-      const updated = await updateProfile(data);
+      const profileData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value.trim() : value,
+        ])
+      );
+
+      const updated = await updateProfile(profileData);
       setProfile(updated);
       setEditing(false);
       toast.success("Profile updated successfully.");
     } catch (err) {
-      const response = err.response?.data;
+      const response = err.response?.data || {};
+      const fieldErrors = response.errors || response;
 
-      if (response?.errors) {
-        Object.values(response.errors).forEach((messages) => {
+      if (
+        fieldErrors &&
+        typeof fieldErrors === "object" &&
+        Object.keys(fieldErrors).length > 0
+      ) {
+        Object.values(fieldErrors).forEach((messages) => {
           toast.error(
             Array.isArray(messages) ? messages[0] : messages
           );

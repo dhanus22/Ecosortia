@@ -22,3 +22,8 @@ export const getAdminReportDetails = async (id) => {
     const response = await api.get(`/waste/reports/${id}/`);
     return response.data;
 };
+
+export const updateReportStatus = async (id, data) => {
+    const response = await api.put(`/waste/report/${id}/status/`, data);
+    return response.data;
+};

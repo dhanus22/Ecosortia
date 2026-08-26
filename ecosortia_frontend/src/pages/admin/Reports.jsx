@@ -9,6 +9,7 @@ import EmptyState from "../../components/report/EmptyState";
 import StatusBadge from "../../components/report/StatusBadge";
 import { WASTE_TYPES } from "../../utils/constants";
 import { formatDate } from "../../utils/dateFormatter";
+import { Link } from "react-router-dom";
 
 function Reports() {
     const [search, setSearch] = useState("");
@@ -34,7 +35,7 @@ function Reports() {
             <div>
                 <h1 className="text-3xl font-bold">Waste Reports</h1>
                 <p className="text-slate-500 mt-2">
-                    Manage submitted waste reports in FIFO order.
+                    Manage submitted waste reports.
                 </p>
             </div>
 
@@ -89,7 +90,11 @@ function Reports() {
                                 {reports.map((report) => (
                                     <tr key={report.id} className="hover:bg-slate-50">
                                         <td className="p-4">
-                                            <p className="font-medium">{report.title}</p>
+                                            <Link
+                                                to={`/admin/report/${report.id}`}
+                                                className="font-medium text-emerald-700 hover:underline">
+                                                {report.title}
+                                            </Link>
                                         </td>
                                         <td className="p-4">{report.user}</td>
                                         <td className="p-4">{report.waste_type}</td>

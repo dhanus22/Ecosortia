@@ -12,7 +12,9 @@ import MyReports from "../pages/citizen/MyReports";
 import Credits from "../pages/citizen/Credits";
 import Profile from "../pages/citizen/Profile";
 
-import ReportDetails from "../pages/admin/ReportDetails";
+
+import CitizenReportDetails from "../pages/citizen/ReportDetails";
+import AdminReportDetails from "../pages/admin/ReportDetails";
 import AdminDashboard from "../pages/admin/Dashboard";
 import Reports from "../pages/admin/Reports";
 
@@ -38,7 +40,7 @@ function AppRoutes() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/report" element={<ReportWaste />} />
                         <Route path="/my-reports" element={<MyReports />} />
-                        <Route path="/my-reports/:id" element={<ReportDetails />} />
+                        <Route path="/my-reports/:id" element={<CitizenReportDetails />} />
                         <Route path="/credits" element={<Credits />} />
                         <Route path="/profile" element={<Profile />} />
                     </Route>
@@ -48,7 +50,7 @@ function AppRoutes() {
                     <Route element={<AdminLayout />}>
                         <Route path="/admin/dashboard" element={<AdminDashboard />} />
                         <Route path="/admin/reports" element={<Reports />} />
-                        <Route path="/admin/report/:id" element={<ReportDetails />} />
+                        <Route path="/admin/report/:id" element={<AdminReportDetails />} />
                         <Route path="/admin/profile" element={<Profile />} />
                     </Route>
                 </Route>
