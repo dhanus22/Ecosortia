@@ -218,3 +218,7 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@ecosortia.local"
+FRONTEND_PASSWORD_RESET_URL = "http://localhost:5173/reset-password"
