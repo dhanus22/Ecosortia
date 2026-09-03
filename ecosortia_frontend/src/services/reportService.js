@@ -34,3 +34,10 @@ export const getReportDetails = async (id) => {
     const response = await api.get(`/waste/report/${id}/`);
     return response.data;
 };
+
+export const downloadMyReportPDF = async (id) => {
+    const response = await api.get(`/waste/report/${id}/pdf/`, {
+        responseType: "blob",
+    });
+    return response.data;
+};

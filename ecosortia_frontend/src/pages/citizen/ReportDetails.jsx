@@ -6,6 +6,8 @@ import StatusBadge from "../../components/report/StatusBadge";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { formatDate } from "../../utils/dateFormatter";
 import api from "../../services/api";
+import { Download } from "lucide-react";
+import { downloadMyReportPDF } from "../../services/reportService";
 
 function CitizenReportDetails() {
     const { id } = useParams();
@@ -40,6 +42,22 @@ function CitizenReportDetails() {
         );
     }
 
+    const handleDownload = async () => {
+        try {
+            const blob = await downloadMyReportPDF(report.id);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `ecosortia-report-${report.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            toast.error("Unable to download report.");
+        }
+    };
+
     return (
         <div className="space-y-6">
             <button
@@ -51,6 +69,14 @@ function CitizenReportDetails() {
                 Back to My Reports
             </button>
 
+            <button
+                type="button"
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-slate-50 transition"
+            >
+                <Download size={17} />
+                Download PDF
+            </button>
             <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
                 <img
                     src={report.image}

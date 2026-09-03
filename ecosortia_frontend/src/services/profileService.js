@@ -6,7 +6,11 @@ export const getProfile = async () => {
 };
 
 export const updateProfile = async (data) => {
-    const response = await api.patch("/users/profile/", data);
+    const response = await api.patch("/users/profile/", data, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
     return response.data;
 };
 

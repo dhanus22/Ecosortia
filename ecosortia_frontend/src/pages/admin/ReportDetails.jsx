@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import StatusBadge from "../../components/report/StatusBadge";
-import { getAdminReportDetails, updateReportStatus } from "../../services/adminService";
+import {
+    getAdminReportDetails,
+    updateReportStatus,
+    downloadAdminReportPDF,
+} from "../../services/adminService";
 import { formatDate } from "../../utils/dateFormatter";
 
 function ReportDetails() {
@@ -75,6 +79,22 @@ function ReportDetails() {
         }
     };
 
+    const handleDownload = async () => {
+        try {
+            const blob = await downloadAdminReportPDF(report.id);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `ecosortia-report-${report.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            toast.error("Unable to download report.");
+        }
+    };
+
     if (loading) return <LoadingSpinner />;
     if (!report) {
         return <div className="bg-red-50 text-red-600 rounded-lg p-4">Report not found.</div>;
@@ -82,13 +102,24 @@ function ReportDetails() {
 
     return (
         <div className="space-y-6">
-            <button
-                type="button"
-                onClick={() => navigate("/admin/reports")}
-                className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
-                <ArrowLeft size={18} />
-                Back to Reports
-            </button>
+            <div className="flex items-center justify-between">
+                <button
+                    type="button"
+                    onClick={() => navigate("/admin/reports")}
+                    className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+                >
+                    <ArrowLeft size={18} />
+                    Back to Reports
+                </button>
+                <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-slate-50 transition"
+                >
+                    <Download size={17} />
+                    Download PDF
+                </button>
+            </div>
             <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
                 <img src={report.image} alt={report.title} className="w-full max-h-[500px] object-cover" />
                 <div className="p-6 space-y-6">
@@ -149,13 +180,20 @@ function ReportDetails() {
                                         ))}
                                     </select>
                                 </div>
-                                <Input label="Admin Remarks" value={remarks} onChange={(e) => setRemarks(e.target.value)}
-                                    placeholder="Enter remarks"/>
+                                <Input
+                                    label="Admin Remarks"
+                                    value={remarks}
+                                    onChange={(e) => setRemarks(e.target.value)}
+                                    placeholder="Enter remarks"
+                                />
                                 <Button type="button" onClick={handleUpdate} disabled={updating}>
                                     {updating ? "Updating..." : "Update Status"}
                                 </Button>
-                            </div>)}
-                    </div> </div> </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

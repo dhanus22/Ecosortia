@@ -14,6 +14,11 @@ api.interceptors.request.use((config) => {
     if (token && !isAuthRoute) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    return config;
+});
+
+api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
@@ -26,8 +31,6 @@ api.interceptors.request.use((config) => {
 
         return Promise.reject(error);
     }
-
-    return config;
-});
+);
 
 export default api;

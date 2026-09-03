@@ -27,3 +27,18 @@ export const updateReportStatus = async (id, data) => {
     const response = await api.put(`/waste/report/${id}/status/`, data);
     return response.data;
 };
+
+export const downloadAdminReportPDF = async (id) => {
+    const response = await api.get(`/waste/reports/${id}/pdf/`, {
+        responseType: "blob",
+    });
+    return response.data;
+};
+
+export const exportAdminReportsExcel = async (params = {}) => {
+    const response = await api.get("/waste/reports/export/excel/", {
+        params,
+        responseType: "blob",
+    });
+    return response.data;
+};

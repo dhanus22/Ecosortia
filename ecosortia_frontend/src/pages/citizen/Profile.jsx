@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Pencil, Coins, User } from "lucide-react";
+import { Pencil, Coins, User, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
@@ -9,10 +9,13 @@ import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import useProfile from "../../hooks/useProfile";
 import { updateProfile, changePassword } from "../../services/profileService";
 import useAuth from "../../hooks/useAuth";
+import { useRef } from "react";
 
 function Profile() {
   const { profile, setProfile, loading, error } = useProfile();
   const [editing, setEditing] = useState(false);
+  const [profilePreview, setProfilePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const { user } = useAuth();
   const currentUser = user?.user ?? user;
 
@@ -70,39 +73,6 @@ function Profile() {
     setEditing(false);
   };
 
-  const onSubmit = async (data) => {
-    try {
-      const profileData = Object.fromEntries(
-        Object.entries(data).map(([key, value]) => [
-          key,
-          typeof value === "string" ? value.trim() : value,
-        ])
-      );
-
-      const updated = await updateProfile(profileData);
-      setProfile(updated);
-      setEditing(false);
-      toast.success("Profile updated successfully.");
-    } catch (err) {
-      const response = err.response?.data || {};
-      const fieldErrors = response.errors || response;
-
-      if (
-        fieldErrors &&
-        typeof fieldErrors === "object" &&
-        Object.keys(fieldErrors).length > 0
-      ) {
-        Object.values(fieldErrors).forEach((messages) => {
-          toast.error(
-            Array.isArray(messages) ? messages[0] : messages
-          );
-        });
-      } else {
-        toast.error("Unable to update profile.");
-      }
-    }
-  };
-
   const onPasswordSubmit = async (data) => {
     try {
       await changePassword(data);
@@ -120,6 +90,64 @@ function Profile() {
         });
       } else {
         toast.error("Unable to change password.");
+      }
+    }
+  };
+
+  const handleProfilePicture = (file) => {
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png"];
+
+    if (!allowed.includes(file.type)) {
+      toast.error("Only JPG and PNG images are allowed.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size cannot exceed 5 MB.");
+      return;
+    }
+
+    setProfilePreview(URL.createObjectURL(file));
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      const formData = new FormData();
+
+      formData.append("first_name", data.first_name);
+      formData.append("last_name", data.last_name);
+      formData.append("email", data.email);
+      formData.append("phone_number", data.phone_number);
+      formData.append("address", data.address);
+
+      if (fileInputRef.current?.files[0]) {
+        formData.append(
+          "profile_picture",
+          fileInputRef.current.files[0]
+        );
+      }
+
+      const updated = await updateProfile(formData);
+
+      setProfile(updated);
+      setProfilePreview(null);
+      setEditing(false);
+
+      toast.success("Profile updated successfully.");
+    } catch (err) {
+      const response = err.response?.data;
+      const errors = response?.errors || response;
+
+      if (errors && typeof errors === "object") {
+        Object.values(errors).forEach((messages) => {
+          toast.error(
+            Array.isArray(messages) ? messages[0] : messages
+          );
+        });
+      } else {
+        toast.error("Unable to update profile.");
       }
     }
   };
@@ -146,16 +174,35 @@ function Profile() {
       <Card>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-              {profile?.profile_picture ? (
-                <img
-                  src={profile.profile_picture}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-              ) : (
-                <User size={30} />
-              )}
+            <div className="relative w-20 h-20 shrink-0">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-emerald-100 flex items-center justify-center text-emerald-600">
+                {(profilePreview || profile?.profile_picture) ? (
+                  <img
+                    src={profilePreview || profile.profile_picture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={32} />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change profile photo"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm ring-2 ring-white hover:bg-emerald-700 transition"
+              >
+                <Camera size={15} />
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                hidden
+                onChange={(e) => handleProfilePicture(e.target.files[0])}
+              />
             </div>
 
             <div>
@@ -172,7 +219,7 @@ function Profile() {
             <button
               type="button"
               onClick={startEditing}
-              className="flex items-center justify-center gap-2 px-4 py-2 border rounded-lg hover:bg-slate-50 transition"
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition"
             >
               <Pencil size={17} />
               Edit Profile
@@ -224,27 +271,27 @@ function Profile() {
               </p>
             </div>
             {currentUser?.is_staff ? " " : (
-               <div className="md:col-span-2 border-t pt-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
-                  <Coins size={22} />
+              <div className="md:col-span-2 border-t pt-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
+                    <Coins size={22} />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-slate-500">
+                      Credits Earned
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {profile?.credits ?? 0}
+                    </p>
+                  </div>
                 </div>
-                
-                <div>
-                  <p className="text-sm text-slate-500">
-                    Credits Earned
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {profile?.credits ?? 0}
-                  </p>
-                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Credits are awarded automatically when your completed waste reports are processed.
+                </p>
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Credits are awarded automatically when your completed waste reports are processed.
-              </p>
-            </div>
             )}
-           
+
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

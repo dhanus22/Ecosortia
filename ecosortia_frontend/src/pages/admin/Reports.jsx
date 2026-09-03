@@ -10,6 +10,9 @@ import StatusBadge from "../../components/report/StatusBadge";
 import { WASTE_TYPES } from "../../utils/constants";
 import { formatDate } from "../../utils/dateFormatter";
 import { Link } from "react-router-dom";
+import { Download } from "lucide-react";
+import { exportAdminReportsExcel } from "../../services/adminService";
+import toast from "react-hot-toast";
 
 function Reports() {
     const [search, setSearch] = useState("");
@@ -25,6 +28,27 @@ function Reports() {
         wasteType,
         "created_at"
     );
+
+    const handleExport = async () => {
+        try {
+            const blob = await exportAdminReportsExcel({
+                search: debouncedSearch,
+                status,
+                waste_type: wasteType,
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "ecosortia-waste-reports.xlsx";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            toast.error("Unable to export reports.");
+        }
+    };
 
     useEffect(() => {
         setPage(1);
@@ -56,6 +80,14 @@ function Reports() {
                         </option>
                     ))}
                 </select>
+                <button
+                    type="button"
+                    onClick={handleExport}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border rounded-lg bg-white hover:bg-slate-50 transition"
+                >
+                    <Download size={18} />
+                    Export Excel
+                </button>
             </div>
 
             {error && (
