@@ -8,6 +8,9 @@ from .views import (
     DashboardStatsView,
     MyDashboardView,
     AdminWasteReportDetailView,
+    CitizenReportPDFView,
+    AdminReportPDFView,
+    AdminReportsExcelView,
 )
 
 urlpatterns = [
@@ -19,4 +22,7 @@ urlpatterns = [
     path( "dashboard/", DashboardStatsView.as_view(),name="dashboard",),
     path("my-dashboard/", MyDashboardView.as_view(),name="my-dashboard",),
     path("reports/<int:pk>/",AdminWasteReportDetailView.as_view(),name="admin-report-detail",),
+    path("report/<int:pk>/pdf/",CitizenReportPDFView.as_view(), name="citizen-report-pdf",),
+    path("reports/<int:pk>/pdf/",AdminReportPDFView.as_view(),name="admin-report-pdf",),
+    path("reports/export/excel/",AdminReportsExcelView.as_view(), name="admin-reports-excel",),
 ]

@@ -15,6 +15,9 @@ from .serializers import (
 from apps.credits.services import add_credits, calculate_credits
 from apps.common.permissions import IsMunicipalityAdmin
 from drf_spectacular.utils import extend_schema
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from .export_services import generate_report_pdf, generate_reports_excel
 
 
 @extend_schema(
@@ -239,3 +242,80 @@ class AdminWasteReportDetailView(generics.RetrieveAPIView):
     serializer_class = WasteReportSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = WasteReport.objects.select_related("user").all()
+
+
+class CitizenReportPDFView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        report = get_object_or_404(
+            WasteReport,
+            pk=pk,
+            user=request.user,
+        )
+
+        buffer = generate_report_pdf(report)
+
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename=f"ecosortia-report-{report.id}.pdf",
+            content_type="application/pdf",
+        )
+
+class AdminReportPDFView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, pk):
+        report = get_object_or_404(
+            WasteReport,
+            pk=pk,
+        )
+
+        buffer = generate_report_pdf(report)
+
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename=f"ecosortia-report-{report.id}.pdf",
+            content_type="application/pdf",
+        )
+
+class AdminReportsExcelView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        reports = WasteReport.objects.select_related("user").all()
+
+        status_filter = request.query_params.get("status")
+        waste_type = request.query_params.get("waste_type")
+        search = request.query_params.get("search")
+
+        if status_filter:
+            reports = reports.filter(status=status_filter)
+
+        if waste_type:
+            reports = reports.filter(waste_type=waste_type)
+
+        if search:
+            reports = reports.filter(
+                title__icontains=search
+            ) | reports.filter(
+                description__icontains=search
+            ) | reports.filter(
+                address__icontains=search
+            ) | reports.filter(
+                user__username__icontains=search
+            )
+
+        buffer = generate_reports_excel(reports)
+
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename="ecosortia-waste-reports.xlsx",
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )

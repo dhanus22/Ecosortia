@@ -3,4 +3,9 @@ from rest_framework.permissions import BasePermission
 class IsMunicipalityAdmin(BasePermission):
 
     def has_permission(self, request, view):
-        return request.user.is_staff
+        return bool(
+                    request.user
+                    and request.user.is_authenticated
+                    and request.user.is_staff
+                )
+        
