@@ -5,6 +5,8 @@ import AdminLayout from "../layouts/AdminLayout";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 import Dashboard from "../pages/citizen/Dashboard";
 import ReportWaste from "../pages/citizen/ReportWaste";
@@ -32,6 +34,8 @@ function AppRoutes() {
                     <Route element={<AuthLayout />}>
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
                     </Route>
                 </Route>
 

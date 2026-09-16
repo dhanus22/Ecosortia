@@ -66,6 +66,12 @@ function Login() {
                         required: "Password is required",
                     })} />
 
+                <div className="text-right">
+                    <Link to="/forgot-password" className="text-sm text-emerald-600 hover:underline">
+                        Forgot Password?
+                    </Link>
+                </div>
+
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Signing in..." : "Login"}</Button>
             </form>
