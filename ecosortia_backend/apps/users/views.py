@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
+from apps.users.permissions import IsMainAdmin
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
@@ -12,12 +13,16 @@ from django.conf import settings
 from rest_framework.permissions import AllowAny
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
+from django.contrib.auth.models import Group
 
 from .serializers import (
+    MunicipalityUserCreateSerializer,
     UserRegisterSerializer,
     UserProfileSerializer,
     LoginSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
+    MunicipalityUserSerializer,
+    MunicipalityUserRoleUpdateSerializer,
 )
 
 User = get_user_model()
@@ -254,3 +259,41 @@ class PasswordResetConfirmView(APIView):
             {"message": "Password has been reset successfully."},
             status=status.HTTP_200_OK,
         )
+
+class MunicipalityUserCreateView(generics.CreateAPIView):
+    serializer_class = MunicipalityUserCreateSerializer
+    permission_classes = [IsMainAdmin]
+
+class MunicipalityUserListView(generics.ListAPIView):
+    serializer_class = MunicipalityUserSerializer
+    permission_classes = [IsMainAdmin]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            is_staff=True,
+            is_superuser=False,
+            groups__name__in=[
+                "Municipality Admin",
+                "Municipality Staff",
+            ],
+        ).distinct().order_by("username")
+
+class MunicipalityUserRoleUpdateView(generics.UpdateAPIView):
+    serializer_class = MunicipalityUserRoleUpdateSerializer
+    permission_classes = [IsMainAdmin]
+    queryset = User.objects.filter(
+        is_staff=True,
+        is_superuser=False,
+    )
+
+    def perform_update(self, serializer):
+        user = self.get_object()
+        role = serializer.validated_data["role"]
+
+        user.groups.clear()
+        user.groups.add(
+            Group.objects.get(name=role)
+        )
+
+        user.is_staff = True
+        user.save(update_fields=["is_staff"])

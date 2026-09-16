@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 import re
+from django.contrib.auth.models import Group
 
 User = get_user_model()
 
@@ -185,3 +186,67 @@ class ChangePasswordSerializer(serializers.Serializer):
         validate_password(attrs["new_password"], user)
 
         return attrs
+
+class MunicipalityUserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    role = serializers.ChoiceField(
+        choices=["Municipality Admin", "Municipality Staff"]
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "address",
+            "password",
+            "role",
+        )
+
+    def create(self, validated_data):
+        role = validated_data.pop("role")
+        password = validated_data.pop("password")
+
+        user = User(**validated_data)
+        user.is_staff = True
+        user.set_password(password)
+        user.save()
+
+        group = Group.objects.get(name=role)
+        user.groups.add(group)
+
+        return user
+
+class MunicipalityUserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "is_active",
+            "role",
+        )
+
+    def get_role(self, obj):
+        if obj.groups.filter(name="Municipality Admin").exists():
+            return "Municipality Admin"
+        if obj.groups.filter(name="Municipality Staff").exists():
+            return "Municipality Staff"
+        return None
+
+class MunicipalityUserRoleUpdateSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(
+        choices=[
+            "Municipality Admin",
+            "Municipality Staff",
+        ]
+    )
