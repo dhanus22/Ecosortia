@@ -13,6 +13,7 @@ import ReportWaste from "../pages/citizen/ReportWaste";
 import MyReports from "../pages/citizen/MyReports";
 import Credits from "../pages/citizen/Credits";
 import Profile from "../pages/citizen/Profile";
+import MunicipalityUsers from "../pages/admin/MunicipalityUsers";
 
 
 import CitizenReportDetails from "../pages/citizen/ReportDetails";
@@ -56,6 +57,7 @@ function AppRoutes() {
                         <Route path="/admin/reports" element={<Reports />} />
                         <Route path="/admin/report/:id" element={<AdminReportDetails />} />
                         <Route path="/admin/profile" element={<Profile />} />
+                        <Route path="/admin/users" element={<MunicipalityUsers />} />
                     </Route>
                 </Route>
             </Routes>

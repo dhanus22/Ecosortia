@@ -5,6 +5,7 @@ import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import useAuth from "../../hooks/useAuth";
 import {
     getMunicipalityUsers,
     createMunicipalityUser,
@@ -12,10 +13,26 @@ import {
 } from "../../services/adminService";
 
 function MunicipalityUsers() {
+    const { user } = useAuth();
+    const currentUser = user?.user ?? user;
+
+    const isMainAdmin =
+        currentUser?.is_superuser === true ||
+        currentUser?.role === "Main Admin";
+
+    const isMunicipalityAdmin =
+        !isMainAdmin &&
+        (currentUser?.role === "Municipality Admin" ||
+            currentUser?.groups?.includes?.("Municipality Admin"));
+
+    const canCreateUser = isMainAdmin || isMunicipalityAdmin;
+    const canUpdateRole = isMainAdmin;
+
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+
     const [form, setForm] = useState({
         username: "",
         first_name: "",
@@ -32,7 +49,7 @@ function MunicipalityUsers() {
             setLoading(true);
             const data = await getMunicipalityUsers();
             setUsers(data.results ?? data);
-        } catch {
+        } catch (error) {
             toast.error("Unable to load municipality users.");
         } finally {
             setLoading(false);
@@ -50,32 +67,41 @@ function MunicipalityUsers() {
         }));
     };
 
+    const resetForm = () => {
+        setForm({
+            username: "",
+            first_name: "",
+            last_name: "",
+            email: "",
+            phone_number: "",
+            address: "",
+            password: "",
+            role: "Municipality Staff",
+        });
+    };
+
     const handleCreate = async (e) => {
         e.preventDefault();
 
         try {
             setSubmitting(true);
+
             await createMunicipalityUser(form);
+
             toast.success("Municipality user created successfully.");
-            setForm({
-                username: "",
-                first_name: "",
-                last_name: "",
-                email: "",
-                phone_number: "",
-                address: "",
-                password: "",
-                role: "Municipality Staff",
-            });
+
+            resetForm();
             setShowForm(false);
-            fetchUsers();
+            await fetchUsers();
         } catch (error) {
             const response = error.response?.data;
             const errors = response?.errors || response;
 
             if (errors && typeof errors === "object") {
                 Object.values(errors).forEach((messages) => {
-                    toast.error(Array.isArray(messages) ? messages[0] : messages);
+                    toast.error(
+                        Array.isArray(messages) ? messages[0] : messages
+                    );
                 });
             } else {
                 toast.error("Unable to create municipality user.");
@@ -88,40 +114,55 @@ function MunicipalityUsers() {
     const handleRoleChange = async (id, role) => {
         try {
             await updateMunicipalityUserRole(id, role);
+
             setUsers((current) =>
-                current.map((user) =>
-                    user.id === id ? { ...user, role } : user
+                current.map((municipalityUser) =>
+                    municipalityUser.id === id
+                        ? { ...municipalityUser, role }
+                        : municipalityUser
                 )
             );
+
             toast.success("User role updated.");
-        } catch {
+        } catch (error) {
             toast.error("Unable to update user role.");
         }
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Municipality Users</h1>
+                    <h1 className="text-3xl font-bold">
+                        Municipality Users
+                    </h1>
+
                     <p className="text-slate-500 mt-2">
-                        Create and manage municipality accounts.
+                        {isMainAdmin
+                            ? "Create and manage municipality accounts."
+                            : isMunicipalityAdmin
+                            ? "Create municipality accounts and view existing users."
+                            : "View municipality accounts."}
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => setShowForm((current) => !current)}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-                >
-                    <UserPlus size={18} />
-                    Create User
-                </button>
+                {canCreateUser && (
+                    <button
+                        type="button"
+                        onClick={() => setShowForm((current) => !current)}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                    >
+                        <UserPlus size={18} />
+                        Create User
+                    </button>
+                )}
             </div>
 
-            {showForm && (
+            {canCreateUser && showForm && (
                 <Card>
                     <h2 className="text-lg font-semibold mb-5">
                         Create Municipality User
@@ -136,6 +177,7 @@ function MunicipalityUsers() {
                                 onChange={handleChange}
                                 required
                             />
+
                             <Input
                                 label="Email"
                                 type="email"
@@ -144,24 +186,28 @@ function MunicipalityUsers() {
                                 onChange={handleChange}
                                 required
                             />
+
                             <Input
                                 label="First Name"
                                 name="first_name"
                                 value={form.first_name}
                                 onChange={handleChange}
                             />
+
                             <Input
                                 label="Last Name"
                                 name="last_name"
                                 value={form.last_name}
                                 onChange={handleChange}
                             />
+
                             <Input
                                 label="Phone Number"
                                 name="phone_number"
                                 value={form.phone_number}
                                 onChange={handleChange}
                             />
+
                             <Input
                                 label="Password"
                                 type="password"
@@ -183,6 +229,7 @@ function MunicipalityUsers() {
                             <label className="block text-sm font-medium mb-2">
                                 Role
                             </label>
+
                             <select
                                 name="role"
                                 value={form.role}
@@ -192,6 +239,7 @@ function MunicipalityUsers() {
                                 <option value="Municipality Staff">
                                     Municipality Staff
                                 </option>
+
                                 <option value="Municipality Admin">
                                     Municipality Admin
                                 </option>
@@ -205,7 +253,10 @@ function MunicipalityUsers() {
 
                             <button
                                 type="button"
-                                onClick={() => setShowForm(false)}
+                                onClick={() => {
+                                    resetForm();
+                                    setShowForm(false);
+                                }}
                                 className="px-5 py-3 border rounded-lg hover:bg-slate-50"
                             >
                                 Cancel
@@ -227,38 +278,61 @@ function MunicipalityUsers() {
                                 <th className="text-left p-4">Status</th>
                             </tr>
                         </thead>
+
                         <tbody className="divide-y">
-                            {users.map((user) => (
-                                <tr key={user.id}>
+                            {users.map((municipalityUser) => (
+                                <tr key={municipalityUser.id}>
                                     <td className="p-4 font-medium">
-                                        {user.username}
+                                        {municipalityUser.username}
                                     </td>
+
                                     <td className="p-4">
-                                        {user.first_name} {user.last_name}
+                                        {municipalityUser.first_name}{" "}
+                                        {municipalityUser.last_name}
                                     </td>
-                                    <td className="p-4">{user.email}</td>
+
                                     <td className="p-4">
-                                        <select
-                                            value={user.role}
-                                            onChange={(e) =>
-                                                handleRoleChange(
-                                                    user.id,
-                                                    e.target.value
-                                                )
+                                        {municipalityUser.email}
+                                    </td>
+
+                                    <td className="p-4">
+                                        {canUpdateRole ? (
+                                            <select
+                                                value={municipalityUser.role || ""}
+                                                onChange={(e) =>
+                                                    handleRoleChange(
+                                                        municipalityUser.id,
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="border rounded-lg px-3 py-2"
+                                            >
+                                                <option value="Municipality Staff">
+                                                    Municipality Staff
+                                                </option>
+
+                                                <option value="Municipality Admin">
+                                                    Municipality Admin
+                                                </option>
+                                            </select>
+                                        ) : (
+                                            <span className="text-slate-600">
+                                                {municipalityUser.role || "-"}
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    <td className="p-4">
+                                        <span
+                                            className={
+                                                municipalityUser.is_active
+                                                    ? "text-emerald-600"
+                                                    : "text-red-600"
                                             }
-                                            className="border rounded-lg px-3 py-2"
                                         >
-                                            <option value="Municipality Staff">
-                                                Municipality Staff
-                                            </option>
-                                            <option value="Municipality Admin">
-                                                Municipality Admin
-                                            </option>
-                                        </select>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={user.is_active ? "text-emerald-600" : "text-red-600"}>
-                                            {user.is_active ? "Active" : "Inactive"}
+                                            {municipalityUser.is_active
+                                                ? "Active"
+                                                : "Inactive"}
                                         </span>
                                     </td>
                                 </tr>
