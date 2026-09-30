@@ -1,4 +1,6 @@
 from rest_framework import generics, permissions
+
+from apps.users.permissions import IsMunicipalityUser
 from .models import WasteReport
 from django.utils import timezone
 from rest_framework.response import Response
@@ -88,7 +90,7 @@ class WasteReportDetailView(generics.RetrieveAPIView):
 )
 class AllWasteReportsView(generics.ListAPIView):
     serializer_class = WasteReportSerializer
-    permission_classes = [IsMunicipalityAdmin]
+    permission_classes = [IsMunicipalityUser]
 
     queryset = WasteReport.objects.select_related("user").all()
 
@@ -167,7 +169,7 @@ class UpdateWasteStatusView(generics.UpdateAPIView):
 )
 class DashboardStatsView(APIView):
 
-    permission_classes = [IsMunicipalityAdmin]
+    permission_classes = [IsMunicipalityUser]
 
     def get(self, request):
 
@@ -240,7 +242,7 @@ class MyDashboardView(APIView):
 
 class AdminWasteReportDetailView(generics.RetrieveAPIView):
     serializer_class = WasteReportSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsMunicipalityUser]
     queryset = WasteReport.objects.select_related("user").all()
 
 

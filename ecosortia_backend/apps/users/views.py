@@ -1,7 +1,12 @@
 from rest_framework import generics, permissions, status
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
-from apps.users.permissions import IsMainAdmin
+from apps.users.permissions import (
+    IsMainAdmin,
+    IsMainAdminOrMunicipalityAdmin,
+    IsMunicipalityAdmin,
+    IsMunicipalityUser
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
@@ -92,19 +97,26 @@ class LoginView(generics.GenericAPIView):
                 "access": str(refresh.access_token),
 
             },
-
             "user": {
-
                 "user": {
-                        "id": user.id,
-                        "username": user.username,
-                        "first_name": user.first_name,
-                        "last_name": user.last_name,
-                        "email": user.email,
-                        "credits": user.credits,
-                        "is_staff": user.is_staff,
-                    }
-
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "credits": user.credits,
+                    "is_staff": user.is_staff,
+                    "is_superuser": user.is_superuser,
+                    "role": (
+                        "Main Admin"
+                        if user.is_superuser
+                        else "Municipality Admin"
+                        if user.groups.filter(name="Municipality Admin").exists()
+                        else "Municipality Staff"
+                        if user.groups.filter(name="Municipality Staff").exists()
+                        else "Citizen"
+                    ),
+                }
             }
 
         }, status=status.HTTP_200_OK)
@@ -112,7 +124,7 @@ class LoginView(generics.GenericAPIView):
 @extend_schema(
     tags=["Authentication"],
     summary="Change Password",
-    description="Allows as authenticated user to change thrir password."
+    description="Allows as authenticated user to change their password."
 )
 class ChangePasswordView(APIView):
 
@@ -262,11 +274,11 @@ class PasswordResetConfirmView(APIView):
 
 class MunicipalityUserCreateView(generics.CreateAPIView):
     serializer_class = MunicipalityUserCreateSerializer
-    permission_classes = [IsMainAdmin]
+    permission_classes = [IsMainAdminOrMunicipalityAdmin]
 
 class MunicipalityUserListView(generics.ListAPIView):
     serializer_class = MunicipalityUserSerializer
-    permission_classes = [IsMainAdmin]
+    permission_classes = [IsMunicipalityUser]
 
     def get_queryset(self):
         return User.objects.filter(
